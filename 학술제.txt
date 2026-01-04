@@ -1,0 +1,6 @@
+내가 해야 할 것
+1. chibicc의 tokenizer를 써서 기본적인 c문법 구조의 토큰들을 추출 할 수 있다.
+2. Parser를 손봐서 다음 과 같은 경우의 줄바꿈 문자 앞에 ;를 추가한다
+   1)return expression 뒤에
+   2)statment 뒤에
+   3)expression(변수 할당,선언 등등) 뒤에

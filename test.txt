@@ -1,0 +1,84 @@
+ESP32-IDF의 구조
+
+1.git repository에 esp-idf가 있고 내 HOME디렉토리의 esp폴더안에 esp-idf가 깔려있다.
+2.처음 esp-idf를 받으면install.sh를 통해 .expressidf를 홈디렉토리에 추가한다(idf.py같은 걸 실행하기 위한여러 툴과 파이썬 환경들)
+~/.espressif/
+  ├── tools/
+  ├── dist/   (다운로드한 압축 파일)
+  └── idf-env.json
+
+3.esp-idf안에 export.sh이 있는데 이걸 실행하면 현재 터미널 세션에 idf.py같은 툴을 환경변수에 저장해 준다. 매번 쓴다면 .zshrc나 .bashrc에 get_idf같은 형식으로 저장해서 세팅하기 쉽게 할 수 있다.
+
+4.내 모든 esp32관련 프로젝트 폴더는 esp안에 들어있다.
+
+
+
+------------------------------------------------
+ESP32를 코딩하는 방법
+------------------------------------------------
+
+USB포트에 ESP32를 연결시키면, 커널이 새 디바이스를 인식하고 udev를 통해 /dev/ttyUSB0처럼 유저에게 노출시킨다.
+이를 통해 유저는 파일처럼 USB에 통신할 수 있고, ESP32와 통신할 수 있다.
+
+ESP32를 작동시키려면 통신을 통해 flash하여 부트로더나 OS같은 기본 정보를 주고 그 위에 우리의 프로그램을 돌리면 된다.
+OS와 드라이버, 모듈은 ESP-IDF에서 따로 제공해주고 유저는 거기에 맞춰 코딩한뒤 규격에 맞게 build파일을 작성하면,
+
+1.idf.py build : CMake로 빌드파일을 작성하고 Ninja로 빌드한다.
+
+2.idf.py -p PORT flash :
+빌드된 바이너리 파일(OS + 드라이버 + 유저 프로그램)을 플래시한다.
+정보는 USB-UART를 지나 ROM의 부트로더가 읽어 플래시해준다.
+
+3.idf.py -p PORT monitor :
+모니터링을 함과 동시에 실행시켜준다(디버깅?).
+
+
+------------------------------------------------
+내가 만들어야 할것
+------------------------------------------------
+
+대충 엄랭마냥 간단한 문법 -> C로 컴파일 하면 똑같은 성능을 발휘할 수 있지만 크게 가치 있는 활동은 아니다.
+그러면 전용 OS와 드라이버는 제치고 ESP-IDF에서 제공하는걸 쓴다고 가정하면, 내가 스스로 기계어로 컴파일하는 JIT를 만들어야 한다.
+C는 기계어와 거의 가까우니, 일단 C용을 하나 만든다음 내가 쓰는 칩에 특화된 JIT도 만들면 완벽할 것 같다.
+
+------------------------------------------------
+이제 해야 할것 (12,23)
+------------------------------------------------
+1.일단 RF-CLOWN을 참고하여 내 ESP32에서 돌려본다.
+2.컴파일러를 짜서 같은 코드를 돌린다.
+3.간단한 성능 테스트(수치 테스트와 실감 테스트)
+3. 3.가 완벽하면 JIT도 짠다.(3.까지만 하고 보고서 먼저 적기)
+
+
+
+
+------------------------------------------------
+문서
+------------------------------------------------
+1.ESP32-WROOM-32E모듈에 대한 문서
+https://documentation.espressif.com/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf
+-내용정리: ESP32 DEVKIT v4에 부착된 모듈 ESP32-WROOM-E에 대한 내용이다.
+          1.여러 프로토콜(SPI,BLE등등)은 GPIO 레지스터를 이용하도록 규약되어있다.
+            프로토콜에 대해 자세히 알려면 문서 2를 읽자
+            -예) SPI는 GPIO2, 4 6~15를 통해 구성됨
+          
+          2.부트될 때 파라미터로 Chip Boot Mode가 있는데 만약 GPIO0, GPIO2가 모두 0이면 UART download boot로
+            부트되어서 UART에서 정보를 읽어와서 Flash한다.
+            UART를 프로토콜대로 연결한거랑, idf.py flash했을때 GPIO0,GPIO2를 0으로 만드는건 외부 회로의 몫이다.
+            내 경우 ESP32 DEVKIT v4에서 한 것 같다.
+
+
+2.ESP32의SoC의 명령어 집합, 메모리 구조, 시스템 구성요소 등등을 포괄적으로 설명한 문서
+https://documentation.espressif.com/esp32_technical_reference_manual_en.pdf
+
+3.ESP32의 포괄적인 내용을 담은 datasheet
+https://documentation.espressif.com/esp32_datasheet_en.pdf#cd-pwr-scheme
+
+4.ESP-IDF프로그래밍 문서
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html
+
+5.ESP32-WROOM-E에들어가는ESP32-D0WD-V3 
+https://www.cadence.com/content/dam/cadence-www/global/en_US/documents/tools/silicon-solutions/compute-ip/isa-summary.pdf
+
+6.NRF24L01의 문서
+https://www.handsontec.com/dataspecs/module/NRF24L01+PA.pdf
